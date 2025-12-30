@@ -1,6 +1,6 @@
 .add-camera-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background-color: var(--bg-color);
   padding: 20px;
 }
 
@@ -11,7 +11,7 @@
 .back-button {
   background: none;
   border: none;
-  color: #4facfe;
+  color: var(--primary-color);
   font-size: 16px;
   cursor: pointer;
   padding: 0;
@@ -23,11 +23,11 @@
 }
 
 .back-button:hover {
-  color: #00f2fe;
+  color: var(--secondary-color);
 }
 
 .add-camera-header h1 {
-  color: #fff;
+  color: var(--primary-color);
   font-size: 24px;
   margin: 0;
 }
@@ -37,6 +37,11 @@
   flex-direction: column;
   gap: 24px;
   max-width: 500px;
+  background: var(--white);
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(130, 69, 60, 0.1);
+  border: 1px solid rgba(130, 69, 60, 0.1);
 }
 
 .form-group {
@@ -46,29 +51,29 @@
 }
 
 .form-group label {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--primary-color);
   font-size: 14px;
   font-weight: 500;
 }
 
 .form-group input {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--white);
+  border: 1px solid rgba(130, 69, 60, 0.2);
   border-radius: 10px;
   padding: 14px 16px;
-  color: #fff;
+  color: var(--text-color);
   font-size: 16px;
   transition: all 0.3s ease;
 }
 
 .form-group input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(130, 69, 60, 0.4);
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #4facfe;
-  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(130, 69, 60, 0.1);
 }
 
 .form-group input:disabled {
@@ -77,16 +82,16 @@
 }
 
 .input-hint {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--secondary-color);
   font-size: 12px;
 }
 
 .submit-button {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: var(--primary-color);
   border: none;
   border-radius: 10px;
   padding: 16px;
-  color: #1a1a2e;
+  color: var(--white);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -95,8 +100,9 @@
 }
 
 .submit-button:hover:not(:disabled) {
+  background: var(--secondary-color);
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(79, 172, 254, 0.4);
+  box-shadow: 0 4px 12px rgba(130, 69, 60, 0.2);
 }
 
 .submit-button:disabled {
@@ -105,11 +111,11 @@
 }
 
 .error-message {
-  background: rgba(255, 71, 87, 0.2);
-  border: 1px solid rgba(255, 71, 87, 0.5);
+  background: rgba(255, 71, 87, 0.1);
+  border: 1px solid rgba(255, 71, 87, 0.3);
   border-radius: 10px;
   padding: 12px;
-  color: #ff6b7a;
+  color: var(--error-color);
   font-size: 14px;
   text-align: center;
 }

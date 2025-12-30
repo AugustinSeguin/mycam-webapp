@@ -1,34 +1,34 @@
 .stream-container {
   min-height: 100vh;
-  background: #000;
+  background-color: var(--bg-color);
   display: flex;
   flex-direction: column;
 }
 
 .stream-header {
   padding: 20px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  background: var(--white);
+  border-bottom: 1px solid rgba(130, 69, 60, 0.1);
   z-index: 10;
 }
 
 .back-button {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--bg-color);
+  border: 1px solid rgba(130, 69, 60, 0.2);
   border-radius: 8px;
-  color: #fff;
+  color: var(--primary-color);
   font-size: 14px;
   cursor: pointer;
   padding: 8px 16px;
   margin-bottom: 12px;
   transition: all 0.3s ease;
+  display: inline-block;
+  text-decoration: none;
 }
 
 .back-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--primary-color);
+  color: var(--white);
 }
 
 .stream-info {
@@ -38,7 +38,7 @@
 }
 
 .stream-info h1 {
-  color: #fff;
+  color: var(--primary-color);
   font-size: 20px;
   margin: 0;
 }
@@ -47,14 +47,14 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #4ade80;
+  color: #0ca678;
   font-size: 14px;
 }
 
 .status-dot {
   width: 8px;
   height: 8px;
-  background: #4ade80;
+  background: #0ca678;
   border-radius: 50%;
   animation: pulse 2s infinite;
 }
@@ -74,11 +74,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
 }
 
 .stream-placeholder {
   text-align: center;
   padding: 40px;
+  background: var(--white);
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(130, 69, 60, 0.1);
+  border: 1px solid rgba(130, 69, 60, 0.1);
 }
 
 .stream-logo {
@@ -90,13 +95,13 @@
 }
 
 .stream-placeholder p {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--primary-color);
   font-size: 16px;
   margin: 0 0 8px 0;
 }
 
 .stream-url {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--secondary-color);
   font-size: 12px;
   font-family: monospace;
   word-break: break-all;
@@ -105,8 +110,10 @@
 .stream-video {
   width: 100%;
   height: auto;
-  max-height: 100vh;
+  max-height: calc(100vh - 250px);
   object-fit: contain;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(130, 69, 60, 0.2);
 }
 
 .stream-controls {
@@ -114,11 +121,8 @@
   display: flex;
   justify-content: center;
   gap: 16px;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  background: var(--white);
+  border-top: 1px solid rgba(130, 69, 60, 0.1);
   padding-bottom: 40px;
 }
 
@@ -127,11 +131,11 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--bg-color);
+  border: 1px solid rgba(130, 69, 60, 0.2);
   border-radius: 12px;
   padding: 12px 20px;
-  color: #fff;
+  color: var(--primary-color);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -143,8 +147,25 @@
 }
 
 .control-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--primary-color);
+  color: var(--white);
   transform: translateY(-2px);
+}
+
+.control-button.recording {
+  background: var(--error-color);
+  color: var(--white);
+  animation: recording-pulse 1.5s infinite;
+}
+
+@keyframes recording-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .loading {

@@ -46,6 +46,14 @@ function Home() {
       handleBeforeInstallPrompt
     );
 
+    // En développement, afficher le bouton même sans beforeinstallprompt
+    if (import.meta.env.DEV) {
+      setInstallPrompt({
+        prompt: () => Promise.resolve(),
+        userChoice: Promise.resolve({ outcome: "dismissed" }),
+      });
+    }
+
     return () => {
       globalThis.removeEventListener(
         "beforeinstallprompt",
@@ -118,6 +126,12 @@ function Home() {
 
   const handleInstallApp = async () => {
     if (installPrompt) {
+      // En développement, ne pas afficher de prompt
+      if (import.meta.env.DEV) {
+        alert("La PWA sera disponible en production (HTTPS requis)");
+        return;
+      }
+
       installPrompt.prompt();
       const { outcome } = await installPrompt.userChoice;
       if (outcome === "accepted") {

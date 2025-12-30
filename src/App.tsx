@@ -22,35 +22,37 @@ function ProtectedRoute({ children }: Readonly<{ children: React.ReactNode }>) {
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route
-          path="/home"
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/add-camera"
-          element={
-            <ProtectedRoute>
-              <AddCamera />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/stream/:camKey"
-          element={
-            <ProtectedRoute>
-              <Stream />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/logout" element={<Navigate to="/" replace />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <div className="container">
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route
+            path="/home"
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-camera"
+            element={
+              <ProtectedRoute>
+                <AddCamera />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stream/:camKey"
+            element={
+              <ProtectedRoute>
+                <Stream />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/logout" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
     </Router>
   );
 }
