@@ -183,7 +183,7 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  background: rgba(255, 71, 87, 0.1);
+  background: var(--error-color);
   border: none;
   border-radius: 8px;
   width: 28px;

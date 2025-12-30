@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { authService, cameraService, User, Camera } from "../services/api.ts";
-import { socketService, NotificationData } from "../services/socket.ts";
+import { NotificationContext } from "../App";
 import "./Home.css";
 
 function Home() {
@@ -9,9 +9,7 @@ function Home() {
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [notification, setNotification] = useState<NotificationData | null>(
-    null
-  );
+  const notification = useContext(NotificationContext);
   const [deleteConfirm, setDeleteConfirm] = useState<Camera | null>(null);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const navigate = useNavigate();
@@ -59,7 +57,7 @@ function Home() {
         "beforeinstallprompt",
         handleBeforeInstallPrompt
       );
-      socketService.disconnect();
+      // socketService.disconnect(); // No longer needed, handled globally
     };
   }, [navigate]);
 
@@ -68,19 +66,6 @@ function Home() {
       setLoading(true);
       const camerasData = await cameraService.getMyCameras();
       setCameras(camerasData);
-
-      // Initialiser Socket.IO après avoir récupéré les caméras
-      const token = authService.getToken();
-      if (token) {
-        socketService.connect(token);
-      }
-
-      // Écouter les notifications
-      socketService.onNotification((data: NotificationData) => {
-        setNotification(data);
-        // Masquer après 5 secondes
-        setTimeout(() => setNotification(null), 5000);
-      });
     } catch (err: any) {
       setError(err.message);
       // Utiliser le cache si disponible
@@ -94,7 +79,7 @@ function Home() {
   };
 
   const handleLogout = () => {
-    socketService.disconnect();
+    // socketService.disconnect(); // No longer needed, handled globally
     authService.logout();
     navigate("/");
   };
@@ -158,8 +143,8 @@ function Home() {
         <div className="notification-toast">
           <div className="notification-icon">🔔</div>
           <div className="notification-content">
-            <strong>{notification.cameraName}</strong>
-            <p>{notification.message}</p>
+            <strong>{notification?.cameraName}</strong>
+            <p>{notification?.message}</p>
           </div>
         </div>
       )}

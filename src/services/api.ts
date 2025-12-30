@@ -18,6 +18,7 @@ const getHeaders = (includeAuth = false) => {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "X-API-Key": API_KEY,
+    "ngrok-skip-browser-warning": "true", // Skip ngrok warning page
   };
 
   if (includeAuth) {

@@ -18,6 +18,11 @@ let socket: Socket | null = null;
 let notificationCallbacks: NotificationCallback[] = [];
 
 export const socketService = {
+  // Initialisation globale asynchrone (background)
+  init(token: string, onNotif: { (notif: any): void; (data: NotificationData): void; }) {
+    this.connect(token);
+    this.onNotification(onNotif);
+  },
   connect(token: string): Socket {
     if (socket?.connected) {
       return socket;
@@ -26,6 +31,10 @@ export const socketService = {
     socket = io(API_URL, {
       auth: {
         token: token,
+      },
+      transports: ["polling", "websocket"],
+      extraHeaders: {
+        "ngrok-skip-browser-warning": "true",
       },
     });
 
