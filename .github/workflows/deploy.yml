@@ -1,4 +1,4 @@
-name: Build and Deploy Front-End
+name: Build and Deploy React Front-End
 
 on:
   push:
@@ -18,17 +18,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm' 
 
       - name: Install dependencies
-        run: npm ci 
+        run: npm install 
 
       - name: Build project
         run: npm run build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
-      - name: Deploy to VPS
+      - name: Deploy to VPS via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -40,7 +39,7 @@ jobs:
           strip_components: 1
           target: ${{ secrets.VPS_TARGET_PATH }}
 
-      - name: Finalize (Optional)
+      - name: Post-deployment commands via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -48,6 +47,6 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
           script: |
-            echo "Déploiement terminé avec succès dans ${{ secrets.VPS_TARGET_PATH }}"
-            # Optionnel : Redémarrer Nginx si nécessaire
+            echo "Déploiement React terminé avec succès !"
+            # Optionnel : décommenter si tu as besoin de recharger Nginx
             # sudo systemctl reload nginx
