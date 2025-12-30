@@ -6,24 +6,26 @@ import "./Stream.css";
 function Stream() {
   const { camKey } = useParams<{ camKey: string }>();
   const navigate = useNavigate();
+
   const [camera, setCamera] = useState<Camera | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const videoRef = useRef<HTMLImageElement>(null);
+
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // URL du flux
+  const streamUrl = camKey ? cameraService.getVideoStreamUrl(camKey) : "";
+
   useEffect(() => {
-    // Vérifier l'authentification
     if (!authService.isAuthenticated()) {
       navigate("/");
       return;
     }
 
-    // Récupérer les infos de la caméra depuis le cache
     const cameras = cameraService.getCachedCameras();
     const currentCamera = cameras.find((cam: Camera) => cam.cam_key === camKey);
 
@@ -32,166 +34,120 @@ function Stream() {
     } else {
       setError("Caméra non trouvée");
     }
-
     setLoading(false);
   }, [camKey, navigate]);
 
+  useEffect(() => {
+    if (!camKey || !camera || !streamUrl) return;
+
+    const token = localStorage.getItem("token");
+    const apiKey = import.meta.env.VITE_API_KEY;
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const decodeMJPEG = async () => {
+      try {
+        const response = await fetch(streamUrl, {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+            "X-API-Key": apiKey || "",
+            "ngrok-skip-browser-warning": "true", // INDISPENSABLE pour ngrok
+            Accept: "multipart/x-mixed-replace, image/jpeg",
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok || !response.body) {
+          throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+
+        const reader = response.body.getReader();
+        let buffer = new Uint8Array(0);
+        while (isMounted) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          // Fusionner le nouveau chunk avec le buffer existant
+          const nextBuffer = new Uint8Array(buffer.length + value.length);
+          nextBuffer.set(buffer);
+          nextBuffer.set(value, buffer.length);
+          buffer = nextBuffer;
+
+          while (true) {
+            // Trouver le début d'une image JPEG (FF D8)
+            const start = buffer.findIndex(
+              (b, i) => b === 0xff && buffer[i + 1] === 0xd8
+            );
+
+            if (start === -1) break;
+
+            // Trouver la fin d'une image JPEG (FF D9)
+            const end = buffer.findIndex(
+              (b, i) => b === 0xff && buffer[i + 1] === 0xd9
+            );
+            if (end === -1 || end < start) break;
+
+            const actualEnd = end + 2;
+            const jpegData = buffer.slice(start, actualEnd);
+
+            // Préparer le buffer pour la suite (on enlève ce qu'on vient de lire)
+            buffer = buffer.slice(actualEnd);
+
+            // Affichage sur le Canvas
+            const blob = new Blob([jpegData], { type: "image/jpeg" });
+            const img = new Image();
+            const url = URL.createObjectURL(blob);
+
+            img.onload = () => {
+              if (canvasRef.current && isMounted) {
+                const ctx = canvasRef.current.getContext("2d");
+                if (ctx) {
+                  ctx.drawImage(
+                    img,
+                    0,
+                    0,
+                    canvasRef.current.width,
+                    canvasRef.current.height
+                  );
+                }
+              }
+              URL.revokeObjectURL(url);
+            };
+            img.src = url;
+          }
+
+          // Sécurité anti-fuite mémoire si le buffer sature sans trouver de JPEG
+          if (buffer.length > 1024 * 1024) buffer = new Uint8Array(0);
+        }
+      } catch (err: any) {
+        if (err.name !== "AbortError" && isMounted) {
+          console.error("Stream Error:", err);
+          setError("Flux interrompu ou protégé (Vérifiez CORS/API Key)");
+        }
+      }
+    };
+
+    decodeMJPEG();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [camKey, camera, streamUrl]);
+
   const handleBack = () => {
-    // Arrêter l'enregistrement si en cours
-    if (isRecording) {
-      stopRecording();
-    }
+    if (isRecording) stopRecording();
     navigate("/home");
   };
 
   const captureScreenshot = () => {
-    const img = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    if (!img) {
-      console.error("Aucune image disponible pour la capture");
-      setError("Impossible de capturer l'image");
-      setTimeout(() => setError(""), 3000);
-      return;
-    }
-
-    // Pour les streams MJPEG, on vérifie seulement naturalWidth
-    // car img.complete est toujours false pour un flux continu
-    const width = img.naturalWidth || img.width;
-    const height = img.naturalHeight || img.height;
-
-    if (width === 0 || height === 0) {
-      console.error("Image pas encore chargée, dimensions:", width, height);
-      setError("Flux vidéo en cours de chargement...");
-      setTimeout(() => setError(""), 3000);
-      return;
-    }
-
-    // Créer un canvas pour capturer l'image
-    const canvas = document.createElement("canvas");
-    canvas.width = width || 640;
-    canvas.height = height || 480;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      console.error("Impossible de créer le contexte canvas");
-      setError("Erreur technique");
-      setTimeout(() => setError(""), 3000);
-      return;
-    }
-
-    try {
-      // Dessiner l'image sur le canvas
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // Convertir en blob et télécharger
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            console.error("Impossible de créer le blob");
-            return;
-          }
-
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `capture-${camera?.name || camKey}-${Date.now()}.jpg`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-
-          console.log("Screenshot capturé avec succès!");
-        },
-        "image/jpeg",
-        0.95
-      );
-    } catch (err) {
-      console.error("Erreur lors de la capture:", err);
-      setError("Erreur lors de la capture de l'image");
-      setTimeout(() => setError(""), 3000);
-    }
-  };
-
-  const startRecording = async () => {
-    if (!videoRef.current) return;
-
-    try {
-      // Créer un canvas pour capturer le stream
-      const canvas = document.createElement("canvas");
-      const img = videoRef.current;
-
-      canvas.width = img.naturalWidth || img.width;
-      canvas.height = img.naturalHeight || img.height;
-      canvasRef.current = canvas;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      // Capturer le stream du canvas
-      const stream = canvas.captureStream(30); // 30 FPS
-      streamRef.current = stream;
-
-      // Dessiner l'image en boucle
-      const drawFrame = () => {
-        if (!isRecording && !canvasRef.current) return;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        if (isRecording) {
-          requestAnimationFrame(drawFrame);
-        }
-      };
-
-      setIsRecording(true);
-      drawFrame();
-
-      // Créer le MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "video/webm;codecs=vp9",
-      });
-
-      recordedChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          recordedChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunksRef.current, {
-          type: "video/webm",
-        });
-
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `video-${camera?.name || camKey}-${Date.now()}.webm`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      };
-
-      mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start();
-    } catch (err) {
-      console.error("Erreur lors du démarrage de l'enregistrement:", err);
-      setError("Impossible de démarrer l'enregistrement");
-      setIsRecording(false);
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-
-      // Nettoyer les références
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
-      }
-      canvasRef.current = null;
-    }
+    const link = document.createElement("a");
+    link.download = `capture-${camKey}-${Date.now()}.jpg`;
+    link.href = canvas.toDataURL("image/jpeg", 0.9);
+    link.click();
   };
 
   const toggleRecording = () => {
@@ -202,28 +158,51 @@ function Stream() {
     }
   };
 
-  if (loading) {
+  const startRecording = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const stream = canvas.captureStream(24); // 24 FPS
+    streamRef.current = stream;
+
+    const recorder = new MediaRecorder(stream, {
+      mimeType: "video/webm;codecs=vp8", // Plus compatible que VP9 sur ESP32-CAM resolutions
+    });
+
+    recordedChunksRef.current = [];
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+    };
+
+    recorder.onstop = () => {
+      const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `video-${Date.now()}.webm`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    recorder.start();
+    mediaRecorderRef.current = recorder;
+    setIsRecording(true);
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+    }
+  };
+
+  if (loading)
     return (
       <div className="stream-container">
-        <div className="loading">Chargement...</div>
+        <div className="loading">Initialisation...</div>
       </div>
     );
-  }
-
-  if (error) {
-    return (
-      <div className="stream-container">
-        <header className="stream-header">
-          <button className="back-button" onClick={handleBack}>
-            ← Retour
-          </button>
-        </header>
-        <div className="error-message">{error}</div>
-      </div>
-    );
-  }
-
-  const streamUrl = camKey ? cameraService.getVideoStreamUrl(camKey) : "";
 
   return (
     <div className="stream-container">
@@ -232,7 +211,7 @@ function Stream() {
           ← Retour
         </button>
         <div className="stream-info">
-          <h1>{camera?.name}</h1>
+          <h1>{camera?.name || "Caméra sans nom"}</h1>
           <span className="stream-status">
             <span className="status-dot"></span> En direct
           </span>
@@ -240,45 +219,32 @@ function Stream() {
       </header>
 
       <div className="stream-wrapper">
-        {streamUrl ? (
-          <img
-            ref={videoRef}
-            src={streamUrl}
-            alt="Flux vidéo"
-            className="stream-video"
-            crossOrigin="anonymous"
-            onError={() => console.error("Erreur de chargement du flux")}
-            onLoad={() => console.log("Flux chargé avec succès")}
-          />
-        ) : (
-          <div className="stream-placeholder">
-            <img src="/logo.png" alt="Camera" className="stream-logo" />
-            <p>Aucun flux vidéo disponible</p>
-            <span className="stream-url">Caméra: {camKey}</span>
-          </div>
-        )}
+        <canvas
+          ref={canvasRef}
+          width={640}
+          height={480}
+          className="stream-video"
+          style={{
+            background: "#000",
+            width: "100%",
+            height: "auto",
+            maxWidth: "800px",
+          }}
+        />
+        {error && <div className="error-overlay">{error}</div>}
       </div>
 
-      {error && (
-        <div className="error-banner" style={{ margin: "0 20px 10px" }}>
-          {error}
-        </div>
-      )}
-
-      {streamUrl && (
-        <div className="stream-controls">
-          <button className="control-button" onClick={captureScreenshot}>
-            <span>📸</span> Capture
-          </button>
-          <button
-            className={`control-button ${isRecording ? "recording" : ""}`}
-            onClick={toggleRecording}
-          >
-            <span>{isRecording ? "⏹️" : "🔴"}</span>{" "}
-            {isRecording ? "Arrêter" : "Enregistrer"}
-          </button>
-        </div>
-      )}
+      <div className="stream-controls">
+        <button className="control-button" onClick={captureScreenshot}>
+          📸 Capture
+        </button>
+        <button
+          className={`control-button ${isRecording ? "recording" : ""}`}
+          onClick={toggleRecording}
+        >
+          {isRecording ? "⏹️ Arrêter" : "🔴 Enregistrer"}
+        </button>
+      </div>
     </div>
   );
 }

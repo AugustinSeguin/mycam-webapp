@@ -145,6 +145,6 @@ export const cameraService = {
   },
 
   getVideoStreamUrl(camKey: string): string {
-    return `${API_URL}/cameras/video/${camKey}?api_key=${API_KEY}`;
+    return `${API_URL}/cameras/video/${camKey}`;
   },
 };

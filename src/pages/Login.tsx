@@ -32,7 +32,10 @@ function Login() {
         <div className="login-header">
           <img src="/logo.png" alt="MyCam" className="login-logo" />
           <h1>MyCam</h1>
+          <br />
           <p>Surveillance en temps réel</p>
+          <br />
+          <p>Auteur : Augustin SEGUIN</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
