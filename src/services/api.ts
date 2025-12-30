@@ -95,11 +95,11 @@ export const cameraService = {
     return data.cameras;
   },
 
-  async createCamera(lastname: string, cam_key: string): Promise<Camera> {
+  async createCamera(name: string, cam_key: string): Promise<Camera> {
     const response = await fetch(`${API_URL}/cameras/create`, {
       method: "POST",
       headers: getHeaders(true),
-      body: JSON.stringify({ lastname, cam_key }),
+      body: JSON.stringify({ name, cam_key }),
     });
 
     const data = await response.json();

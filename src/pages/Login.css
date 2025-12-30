@@ -80,8 +80,38 @@
   background: rgba(255, 255, 255, 0.15);
 }
 
-.form-group input:disabled {
-  opacity: 0.6;
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding-right: 45px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: color 0.3s ease;
+}
+
+.password-toggle:hover {
+  color: #fff;
+}
+
+.password-toggle:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 

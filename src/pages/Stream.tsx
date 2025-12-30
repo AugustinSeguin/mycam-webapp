@@ -64,7 +64,7 @@ function Stream() {
           ← Retour
         </button>
         <div className="stream-info">
-          <h1>{camera?.lastname}</h1>
+          <h1>{camera?.name}</h1>
           <span className="stream-status">
             <span className="status-dot"></span> En direct
           </span>

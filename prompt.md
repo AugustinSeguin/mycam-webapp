@@ -298,5 +298,6 @@ X-API-Key: {{apiKey}}
 - migrer en typescript
 - Formulaire de login: pouvoir afficher le mot de passe qu'on rentre (utilisation d'un oeil pour afficher / masquer le champs mdp)
 - view steam => suppriemr l'option audio (il n'y a pas d'audio)
+
 - pwa => rajouter du bouton "télécharger l'application PWA"
 - demande d'autorisation aux notifications 

@@ -26,6 +26,13 @@ function Home() {
     const userData = authService.getUser();
     setUser(userData);
 
+    // Demander l'autorisation pour les notifications
+    if ("Notification" in globalThis) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    }
+
     // Charger les caméras
     loadCameras();
 
@@ -145,21 +152,25 @@ function Home() {
 
       {/* Top bar */}
       <header className="home-topbar">
-        {installPrompt ? (
-          <button className="topbar-button install" onClick={handleInstallApp}>
-            <span>📲</span> Télécharger PWA
+        <div className="topbar-left">
+          {installPrompt && (
+            <button
+              className="topbar-button install"
+              onClick={handleInstallApp}
+            >
+              <span>📲</span> Télécharger PWA
+            </button>
+          )}
+        </div>
+        <div className="topbar-right">
+          <button className="topbar-button logout" onClick={handleLogout}>
+            Déconnexion
           </button>
-        ) : (
-          <div className="topbar-placeholder"></div>
-        )}
-        <button className="topbar-button logout" onClick={handleLogout}>
-          Déconnexion
-        </button>
+        </div>
       </header>
 
       {/* Greeting */}
       <section className="greeting-section">
-        <img src="/logo.png" alt="MyCam" className="home-logo" />
         <h1>Bonjour {user?.firstname}</h1>
       </section>
 
@@ -179,7 +190,7 @@ function Home() {
                 <img src="/logo.png" alt="Camera" className="camera-logo" />
               </div>
               <div className="camera-info">
-                <h3>{camera.lastname}</h3>
+                <h3>{camera.name}</h3>
               </div>
               <button
                 className="delete-button"
@@ -210,7 +221,7 @@ function Home() {
             <h3>Confirmer la suppression</h3>
             <p>
               Voulez-vous vraiment supprimer la caméra{" "}
-              <strong>{deleteConfirm.lastname}</strong> ?
+              <strong>{deleteConfirm.name}</strong> ?
             </p>
             <div className="modal-actions">
               <button

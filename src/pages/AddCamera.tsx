@@ -4,7 +4,7 @@ import { authService, cameraService } from "../services/api.ts";
 import "./AddCamera.css";
 
 function AddCamera() {
-  const [lastname, setlastname] = useState("");
+  const [name, setName] = useState("");
   const [camKey, setCamKey] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ function AddCamera() {
     setLoading(true);
 
     try {
-      await cameraService.createCamera(lastname, camKey);
+      await cameraService.createCamera(name, camKey);
       navigate("/home");
     } catch (err: any) {
       setError(err.message);
@@ -48,12 +48,12 @@ function AddCamera() {
         {error && <div className="error-message">{error}</div>}
 
         <div className="form-group">
-          <label htmlFor="lastname">lastname de la caméra</label>
+          <label htmlFor="name">Nom de la caméra</label>
           <input
             type="text"
-            id="lastname"
-            value={lastname}
-            onChange={(e) => setlastname(e.target.value)}
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder="Ex: Caméra Salon"
             required
             disabled={loading}
