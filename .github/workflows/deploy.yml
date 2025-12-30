@@ -1,5 +1,4 @@
-# .github/workflows/deploy.yml
-name: Build and Deploy to OVH VPS
+name: Build and Deploy
 
 on:
   push:
@@ -17,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.x
 
       - name: Install dependencies
         run: npm ci
@@ -25,7 +24,7 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Deploy 
+      - name: Deploy
         if: success()
         uses: appleboy/scp-action@v0.1.7
         with:
