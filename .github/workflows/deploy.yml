@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: Build and Deploy Front-End
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -16,21 +17,37 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22.x
+          node-version: '22'
+          cache: 'npm' 
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci 
 
       - name: Build project
         run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
-      - name: Deploy
-        if: success()
+      - name: Deploy to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
+          rm: true 
           source: "dist/*"
+          strip_components: 1
           target: ${{ secrets.VPS_TARGET_PATH }}
+
+      - name: Finalize (Optional)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            echo "Déploiement terminé avec succès dans ${{ secrets.VPS_TARGET_PATH }}"
+            # Optionnel : Redémarrer Nginx si nécessaire
+            # sudo systemctl reload nginx
